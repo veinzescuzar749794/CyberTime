@@ -58,3 +58,26 @@ Use HTTPS in production so secure session cookies are enabled. Do not commit `.e
 ## Scope note
 
 This increment implements user accounts and role-protected dashboards. Active PC session timers, QR/e-wallet payment webhooks, live station status, and rate configuration are later project features in the SRS and are not represented as completed here.
+
+## Project structure
+
+```text
+server/
+  config/       Environment configuration
+  db/           PostgreSQL pool
+  middleware/   Authentication, roles, and async error handling
+  routes/       API endpoint to controller mapping
+  controllers/  HTTP input/output and status handling
+  services/     Shared session and user formatting logic
+  app.js        Express middleware and route registration
+  index.js      API process entry point
+  schema.sql    Database schema and indexes
+src/
+  api/          HTTP client and auth/member API calls
+  components/   Shared UI pieces
+  pages/        Sign-in, dashboard, and staff screens
+  App.jsx       Session state and page coordination
+  main.jsx      Browser entry point
+```
+
+When debugging, start at the route, follow it to the controller, and then to the database pool or frontend API service. API errors include server-side log messages while responses avoid exposing database internals.
