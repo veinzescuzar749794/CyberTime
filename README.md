@@ -5,13 +5,14 @@ CyberTime is a working authentication and member management increment for the ap
 ## Included
 
 - Patron, cashier, and admin roles with role-aware dashboards.
-- Cashier/admin patron registration, optional Student ID, and initial cash deposit.
+- Public patron sign-up with username, optional Student ID, and password; new self-registered accounts start at zero balance.
+- Cashier/admin patron registration, optional Student ID, and initial cash deposit, as specified in FR-003.
 - Username or Student ID sign-in; duplicate username/Student ID prevention.
 - BCrypt password hashing (12 rounds), server-side PostgreSQL sessions, HTTP-only cookies, and logout.
 - Server-enforced role checks for account list and manual cash top-up endpoints.
 - PostgreSQL-backed users and auditable cash top-up transactions.
 
-Public patron self-registration is intentionally absent: the SRS specifies that cashiers register accounts with initial deposits. Staff credentials must be provisioned by the cafe operator; there is no public admin registration or hard-coded demo account.
+Patrons can self-register with no initial credit; cashiers can also create patron accounts and record initial cash deposits as specified in FR-003. Staff credentials must be provisioned by the cafe operator; there is no public staff registration or hard-coded demo account.
 
 ## Requirements
 

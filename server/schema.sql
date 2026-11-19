@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
  balance NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (balance >= 0),
  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_unique ON users (lower(username));
+CREATE UNIQUE INDEX IF NOT EXISTS users_student_id_lower_unique ON users (lower(student_id)) WHERE student_id IS NOT NULL;
 CREATE TABLE IF NOT EXISTS transactions (
  id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id), amount NUMERIC(12,2) NOT NULL CHECK(amount > 0),
  payment_method VARCHAR(20) NOT NULL DEFAULT 'CASH', created_by BIGINT REFERENCES users(id), created_at TIMESTAMPTZ NOT NULL DEFAULT now()
