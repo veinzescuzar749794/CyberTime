@@ -2,7 +2,9 @@ export function toPublicUser(user) {
   return {
     id: user.id,
     username: user.username,
-    studentId: user.student_id,
+    studentId: user.student_id ?? null,
+    email: user.email ?? null,
+    fullName: user.full_name ?? null,
     role: user.role,
     balance: Number(user.balance),
   };

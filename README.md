@@ -1,83 +1,77 @@
-# CyberTime — Accounts and Authentication
+ï»¿# CyberTime â€” Accounts and Authentication
 
-CyberTime is a working authentication and member management increment for the approved Internet Cafe Account Billing & Self-Service Time Extension project. It implements the SRS account feature (FR-001 through FR-003) and role-restricted cashier operations.
+CyberTime is the account and member-management foundation for the approved Internet Cafe Account Billing & Self-Service Time Extension System.
 
-## Included
+## Features
 
 - Patron, cashier, and admin roles with role-aware dashboards.
-- Public patron sign-up with username, optional Student ID, and password; new self-registered accounts start at zero balance.
-- Cashier/admin patron registration, optional Student ID, and initial cash deposit, as specified in FR-003.
-- Username or Student ID sign-in; duplicate username/Student ID prevention.
-- BCrypt password hashing (12 rounds), server-side PostgreSQL sessions, HTTP-only cookies, and logout.
-- Server-enforced role checks for account list and manual cash top-up endpoints.
-- PostgreSQL-backed users and auditable cash top-up transactions.
+- Patron self-registration using username, email, password, and optional Student ID; self-registered balances start at zero.
+- Cashier/admin registration of patrons with optional initial cash deposits.
+- Username or Student ID login, BCrypt password hashing, PostgreSQL-backed sessions, secure cookies, logout, and backend role checks.
+- Profile viewing and editing for the signed-in account only.
+- Password changes that require the current password, validate confirmation, hash the new password, and end active sessions.
+- Forgot-password email recovery using a random, hashed, single-use token with a 30-minute expiry. Requests are rate-limited to five per 15 minutes.
 
-Patrons can self-register with no initial credit; cashiers can also create patron accounts and record initial cash deposits as specified in FR-003. Staff credentials must be provisioned by the cafe operator; there is no public staff registration or hard-coded demo account.
+## Setup
 
-## Requirements
-
-Node.js 20+, npm, and PostgreSQL 15+ (local or Supabase). Create a PostgreSQL database called `cybertime`, then run `server/schema.sql` against it. The server also creates its session table on first startup.
+Requirements: Node.js 20+, npm, and PostgreSQL 15+ (local PostgreSQL or Supabase). Copy `.env.example` to `.env`, then set `DATABASE_URL`, a long random `SESSION_SECRET`, and the SMTP settings below. Run `server/schema.sql` in the Supabase SQL Editor or with `psql`; the script adds the Increment 2 columns and reset-token table to an existing Increment 1 database. The server creates the PostgreSQL session table at startup.
 
 ```powershell
 Copy-Item .env.example .env
-# Edit DATABASE_URL and SESSION_SECRET in .env
+# Edit .env with your database, session, and mail settings.
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Vite proxies `/api` calls to the API at port 8080. For an initial cashier/admin account, generate a bcrypt hash (`node -e "import('bcryptjs').then(async b=>console.log(await b.hash('ReplaceThisPassword!',12)))"`) and insert it directly into the database:
+Open http://localhost:5173. Vite proxies `/api` requests to the API on port 8080.
 
-```sql
-INSERT INTO users(username,password_hash,role)
-VALUES ('cashier', '<paste-bcrypt-hash>', 'CASHIER');
-```
+### SMTP for password recovery
 
-Set `role` to `ADMIN` for the owner account. Change the initial password after distributing credentials. Patron accounts should then be created in the staff dashboard.
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, and `APP_ORIGIN` in `.env`. Use an app password or provider-issued SMTP credential. Never commit `.env`. If SMTP is not configured, the app disables recovery and does not reveal reset tokens.
 
-## Production
+### First staff account
 
-Set `NODE_ENV=production`, a strong random `SESSION_SECRET`, `DATABASE_URL`, `PGSSL=true` when your PostgreSQL provider requires TLS, and `CLIENT_ORIGIN` to your deployed origin. Build the frontend and serve the compiled app from the API:
+Create the first cashier/admin account directly in PostgreSQL. Generate a BCrypt hash:
 
 ```powershell
-npm run build
-npm start
+node -e "import('bcryptjs').then(async b=>console.log(await b.hash('Use-A-Temporary-Password!',12)))"
 ```
 
-Use HTTPS in production so secure session cookies are enabled. Do not commit `.env` or production credentials.
+Then insert it (set role to `ADMIN` for the owner):
+
+```sql
+INSERT INTO users(username, email, password_hash, role)
+VALUES ('cashier', 'cashier@example.com', '<paste-bcrypt-hash>', 'CASHIER');
+```
+
+Have staff set an email for existing patron records before those members need email password recovery. Patron accounts can add/update their email under **Profile & Security**.
 
 ## API summary
 
-- `POST /api/auth/login` — username/student ID and password; establishes session.
-- `GET /api/auth/me` — current signed-in user.
-- `POST /api/auth/logout` — destroys session.
-- `POST /api/users` — cashier/admin creates patron with optional initial deposit.
-- `GET /api/users` — cashier/admin lists accounts.
-- `POST /api/users/:id/topups` — cashier/admin records cash top-up.
-- `GET /api/health` — process health.
-
-## Scope note
-
-This increment implements user accounts and role-protected dashboards. Active PC session timers, QR/e-wallet payment webhooks, live station status, and rate configuration are later project features in the SRS and are not represented as completed here.
+- `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`
+- `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`
+- `GET /api/profile`, `PUT /api/profile`, `PUT /api/profile/password`
+- `GET /api/users`, `POST /api/users`, `POST /api/users/:id/topups` (cashier/admin only)
 
 ## Project structure
 
 ```text
-server/
-  config/       Environment configuration
-  db/           PostgreSQL pool
-  middleware/   Authentication, roles, and async error handling
-  routes/       API endpoint to controller mapping
-  controllers/  HTTP input/output and status handling
-  services/     Shared session and user formatting logic
-  app.js        Express middleware and route registration
-  index.js      API process entry point
-  schema.sql    Database schema and indexes
-src/
-  api/          HTTP client and auth/member API calls
-  components/   Shared UI pieces
-  pages/        Sign-in, dashboard, and staff screens
-  App.jsx       Session state and page coordination
-  main.jsx      Browser entry point
+server/config/       Environment and SMTP settings
+server/db/           PostgreSQL pool
+server/middleware/   Authentication, roles, rate limiting, async errors
+server/routes/       API endpoint mappings
+server/controllers/  Request validation and application operations
+server/services/     Session helpers and email delivery
+server/app.js        Express setup and route registration
+server/schema.sql    Database schema and Increment 2 migration
+src/api/             HTTP client and auth/member/profile calls
+src/components/      Shared UI components
+src/pages/           Sign-in, dashboard, member, profile, and reset screens
+src/App.jsx          Session state and page coordination
 ```
 
-When debugging, start at the route, follow it to the controller, and then to the database pool or frontend API service. API errors include server-side log messages while responses avoid exposing database internals.
+To trace a bug, follow the API path from `server/routes/` to `server/controllers/`, then to `server/db/` or `server/services/`. For UI issues, follow `src/pages/` to the matching call in `src/api/`.
+
+## Remaining SRS scope
+
+Active PC session timers, QR/e-wallet payment webhooks, live station status, and rate configuration are later project features and are not represented as completed here.

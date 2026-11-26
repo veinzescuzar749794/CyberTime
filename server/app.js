@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { config } from './config/env.js';
 import { pool } from './db/pool.js';
 import authRoutes from './routes/authRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(session({
 }));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
 app.use((error, _req, res, _next) => {
   console.error('Unhandled API error:', error);
@@ -33,5 +35,4 @@ if (config.isProduction) {
   app.use(express.static(root));
   app.get('*', (_req, res) => res.sendFile(path.join(root, 'index.html')));
 }
-
 export default app;
