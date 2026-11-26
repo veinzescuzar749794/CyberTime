@@ -1,4 +1,4 @@
-﻿# CyberTime — Accounts and Authentication
+# CyberTime — Accounts and Authentication
 
 CyberTime is the account and member-management foundation for the approved Internet Cafe Account Billing & Self-Service Time Extension System.
 
@@ -11,10 +11,12 @@ CyberTime is the account and member-management foundation for the approved Inter
 - Profile viewing and editing for the signed-in account only.
 - Password changes that require the current password, validate confirmation, hash the new password, and end active sessions.
 - Forgot-password email recovery using a random, hashed, single-use token with a 30-minute expiry. Requests are rate-limited to five per 15 minutes.
+- Increment 3 staff PC station floor with status and remaining-time refresh; admins can register terminals.
+- Cashier/admin can record a cash top-up for the patron in a selected PC active session; balance and station-linked transaction update atomically.
 
 ## Setup
 
-Requirements: Node.js 20+, npm, and PostgreSQL 15+ (local PostgreSQL or Supabase). Copy `.env.example` to `.env`, then set `DATABASE_URL`, a long random `SESSION_SECRET`, and the SMTP settings below. Run `server/schema.sql` in the Supabase SQL Editor or with `psql`; the script adds the Increment 2 columns and reset-token table to an existing Increment 1 database. The server creates the PostgreSQL session table at startup.
+Requirements: Node.js 20+, npm, and PostgreSQL 15+ (local PostgreSQL or Supabase). Copy `.env.example` to `.env`, then set `DATABASE_URL`, a long random `SESSION_SECRET`, and the SMTP settings below. Run `server/schema.sql` in the Supabase SQL Editor or with `psql`; the script adds Increment 2 profile/recovery tables and Increment 3 computers, sessions, and station-linked transaction fields to an existing database. The server creates the PostgreSQL session table at startup.
 
 ```powershell
 Copy-Item .env.example .env
@@ -52,6 +54,7 @@ Have staff set an email for existing patron records before those members need em
 - `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`
 - `GET /api/profile`, `PUT /api/profile`, `PUT /api/profile/password`
 - `GET /api/users`, `POST /api/users`, `POST /api/users/:id/topups` (cashier/admin only)
+- `GET /api/stations` (cashier/admin), `POST /api/stations` (admin), `POST /api/stations/:pcId/topups` (cashier/admin)
 
 ## Project structure
 
@@ -63,15 +66,15 @@ server/routes/       API endpoint mappings
 server/controllers/  Request validation and application operations
 server/services/     Session helpers and email delivery
 server/app.js        Express setup and route registration
-server/schema.sql    Database schema and Increment 2 migration
+server/schema.sql    Database schema and Increment 2/3 migration
 src/api/             HTTP client and auth/member/profile calls
 src/components/      Shared UI components
-src/pages/           Sign-in, dashboard, member, profile, and reset screens
+src/pages/           Sign-in, dashboard, member, profile, reset, and station-floor screens
 src/App.jsx          Session state and page coordination
 ```
 
 To trace a bug, follow the API path from `server/routes/` to `server/controllers/`, then to `server/db/` or `server/services/`. For UI issues, follow `src/pages/` to the matching call in `src/api/`.
 
-## Remaining SRS scope
+## SRS status
 
-Active PC session timers, QR/e-wallet payment webhooks, live station status, and rate configuration are later project features and are not represented as completed here.
+FR-009 and FR-010 have station-floor and station-linked cash-top-up code. The PC client that creates and updates active session records is not wired yet, and the database is not configured in this workspace, so those flows are not end-to-end verified. FR-004 overlay, FR-005 low-time alert, FR-006 PC lock, FR-007 payment QR, and FR-008 payment webhook are not implemented yet.

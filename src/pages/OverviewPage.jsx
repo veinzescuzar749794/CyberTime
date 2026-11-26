@@ -15,6 +15,7 @@ export default function OverviewPage({ user, isStaff, openView, refreshMembers }
     </section>
     {isStaff&&<section className="panel"><div className="panelhead"><div><h3>Staff tools</h3><p>Cashier and admin account operations</p></div></div><div className="tools">
       <button onClick={()=>openView('register')}>+ Register a member <span>with initial cash deposit {'\u2192'}</span></button>
+      <button onClick={()=>openView('stations')}>PC station floor <span>view live status and remaining time</span></button>
       <button onClick={()=>{openView('accounts');refreshMembers()}}>{'\u2659'} Browse accounts <span>record manual top-ups {'\u2192'}</span></button>
     </div></section>}
   </>;
