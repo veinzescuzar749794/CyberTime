@@ -9,7 +9,6 @@ import { pool } from './db/pool.js';
 import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import userRoutes from './routes/userRoutes.js';
-import stationRoutes from './routes/stationRoutes.js';
 
 const app = express();
 const PgStore = connectPg(session);
@@ -26,7 +25,6 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/stations', stationRoutes);
 app.use((error, _req, res, _next) => {
   console.error('Unhandled API error:', error);
   res.status(500).json({ error: 'Unexpected server error. Check the server logs for details.' });
